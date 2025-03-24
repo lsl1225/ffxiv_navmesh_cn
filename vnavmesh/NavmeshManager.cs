@@ -110,6 +110,14 @@ public sealed class NavmeshManager : IDisposable
         return true;
     }
 
+    internal void ReplaceMesh(Navmesh mesh)
+    {
+        Log($"Mesh replaced");
+        Navmesh = mesh;
+        Query = new(Navmesh);
+        OnNavmeshChanged?.Invoke(Navmesh, Query);
+    }
+
     private static bool InCutscene => Service.Condition[ConditionFlag.WatchingCutscene] || Service.Condition[ConditionFlag.OccupiedInCutSceneEvent];
 
     public Task<List<Vector3>> QueryPath(Vector3 from, Vector3 to, bool flying, CancellationToken externalCancel = default)
@@ -184,7 +192,7 @@ public sealed class NavmeshManager : IDisposable
         return $"{terrRow?.Bg}//{filterKey:X}//{LayoutUtils.FestivalsString(layout->ActiveFestivals)}";
     }
 
-    private unsafe string GetCacheKey(SceneDefinition scene)
+    internal static unsafe string GetCacheKey(SceneDefinition scene)
     {
         // note: festivals are active globally, but majority of zones don't have festival-specific layers, so we only want real ones in the cache key
         var layout = LayoutWorld.Instance()->ActiveLayout;

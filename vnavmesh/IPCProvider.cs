@@ -1,4 +1,5 @@
-﻿using Navmesh.Movement;
+﻿using FFXIVClientStructs.FFXIV.Common.Component.BGCollision.Math;
+using Navmesh.Movement;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -17,6 +18,7 @@ class IPCProvider : IDisposable
         RegisterFunc("Nav.Reload", () => navmeshManager.Reload(true));
         RegisterFunc("Nav.Rebuild", () => navmeshManager.Reload(false));
         RegisterFunc("Nav.Pathfind", (Vector3 from, Vector3 to, bool fly) => navmeshManager.QueryPath(from, to, fly));
+        RegisterFunc("Nav.PathfindWithTolerance", (Vector3 from, Vector3 to, bool fly, float range) => navmeshManager.QueryPath(from, to, fly, range: range));
         RegisterFunc("Nav.PathfindCancelable", (Vector3 from, Vector3 to, bool fly, CancellationToken cancel) => navmeshManager.QueryPath(from, to, fly, cancel));
         RegisterAction("Nav.PathfindCancelAll", () => navmeshManager.Reload(true));
         RegisterFunc("Nav.PathfindInProgress", () => navmeshManager.PathfindInProgress);
@@ -24,6 +26,7 @@ class IPCProvider : IDisposable
         RegisterFunc("Nav.IsAutoLoad", () => Service.Config.AutoLoadNavmesh);
         RegisterAction("Nav.SetAutoLoad", (bool v) => { Service.Config.AutoLoadNavmesh = v; Service.Config.NotifyModified(); });
         RegisterFunc("Nav.BuildBitmap", (Vector3 startingPos, string filename, float pixelSize) => navmeshManager.BuildBitmap(startingPos, filename, pixelSize));
+        RegisterFunc("Nav.BuildBitmapBounded", (Vector3 startingPos, string filename, float pixelSize, Vector3 minBounds, Vector3 maxBounds) => navmeshManager.BuildBitmap(startingPos, filename, pixelSize, new AABB { Min = minBounds, Max = maxBounds }));
 
         RegisterFunc("Query.Mesh.NearestPoint", (Vector3 p, float halfExtentXZ, float halfExtentY) => navmeshManager.Query?.FindNearestPointOnMesh(p, halfExtentXZ, halfExtentY));
         RegisterFunc("Query.Mesh.PointOnFloor", (Vector3 p, bool allowUnlandable, float halfExtentXZ) => navmeshManager.Query?.FindPointOnFloor(p, halfExtentXZ));
@@ -41,6 +44,7 @@ class IPCProvider : IDisposable
         RegisterAction("Path.SetTolerance", (float v) => followPath.Tolerance = v);
 
         RegisterFunc("SimpleMove.PathfindAndMoveTo", (Vector3 dest, bool fly) => move.MoveTo(dest, fly));
+        RegisterFunc("SimpleMove.PathfindAndMoveCloseTo", (Vector3 dest, bool fly, float range) => move.MoveTo(dest, fly, range));
         RegisterFunc("SimpleMove.PathfindInProgress", () => move.TaskInProgress);
 
         RegisterFunc("Window.IsOpen", () => mainWindow.IsOpen);
@@ -87,6 +91,13 @@ class IPCProvider : IDisposable
     private void RegisterFunc<TRet, T1, T2, T3, T4>(string name, Func<T1, T2, T3, T4, TRet> func)
     {
         var p = Service.PluginInterface.GetIpcProvider<T1, T2, T3, T4, TRet>("vnavmesh." + name);
+        p.RegisterFunc(func);
+        _disposeActions.Add(p.UnregisterFunc);
+    }
+
+    private void RegisterFunc<TRet, T1, T2, T3, T4, T5>(string name, Func<T1, T2, T3, T4, T5, TRet> func)
+    {
+        var p = Service.PluginInterface.GetIpcProvider<T1, T2, T3, T4, T5, TRet>("vnavmesh." + name);
         p.RegisterFunc(func);
         _disposeActions.Add(p.UnregisterFunc);
     }

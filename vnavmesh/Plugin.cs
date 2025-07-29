@@ -40,7 +40,7 @@ public sealed class Plugin : IDalamudPlugin
         _navmeshManager = new(new($"{dalamud.ConfigDirectory.FullName}/meshcache"));
         _followPath = new(dalamud, _navmeshManager);
         _asyncMove = new(_navmeshManager, _followPath);
-        _dtrProvider = new(_navmeshManager, _asyncMove);
+        _dtrProvider = new(_navmeshManager, _asyncMove, _followPath);
         _wndMain = new(_navmeshManager, _followPath, _asyncMove, _dtrProvider, dalamud.ConfigDirectory.FullName);
         _ipcProvider = new(_navmeshManager, _followPath, _asyncMove, _wndMain, _dtrProvider);
 
@@ -112,7 +112,7 @@ public sealed class Plugin : IDalamudPlugin
     private void OnUpdate(IFramework fwk)
     {
         _navmeshManager.Update();
-        _followPath.Update();
+        _followPath.Update(fwk);
         _asyncMove.Update();
         _dtrProvider.Update();
     }

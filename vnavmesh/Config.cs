@@ -11,10 +11,15 @@ public class Config
 
     public bool AutoLoadNavmesh = true;
     public bool EnableDTR = true;
+    public bool ShowQueryStatusInDTR = true;
     public bool AlignCameraToMovement;
     public bool ShowWaypoints;
     public bool ForceShowGameCollision;
     public bool CancelMoveOnUserInput;
+    public bool StopOnStuck = false;
+    public float StuckTolerance = 0.05f;
+    public int StuckTimeoutMs = 500;
+    public bool RetryOnStuck = true;
     public float RandomnessMultiplier = 1f;
 
     public event Action? Modified;
@@ -27,6 +32,8 @@ public class Config
             NotifyModified();
         if (ImGui.Checkbox("Enable DTR bar", ref EnableDTR))
             NotifyModified();
+        if (ImGui.Checkbox("Show detailed query status in DTR", ref ShowQueryStatusInDTR))
+            NotifyModified();
         if (ImGui.Checkbox("Align camera to movement direction", ref AlignCameraToMovement))
             NotifyModified();
         if (ImGui.Checkbox("Show active waypoints", ref ShowWaypoints))
@@ -35,6 +42,27 @@ public class Config
             NotifyModified();
         if (ImGui.Checkbox("Cancel current path on player movement input", ref CancelMoveOnUserInput))
             NotifyModified();
+        if (ImGui.Checkbox("Stop pathing when stuck", ref StopOnStuck))
+            NotifyModified();
+
+        if (StopOnStuck)
+        {
+            if (ImGui.SliderFloat("Stuck tolerance (yalms/second)", ref StuckTolerance, 0.5f, 3f))
+                NotifyModified();
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip("The minimum distance the object must move each frame to avoid being considered stuck.");
+
+            if (ImGui.SliderInt("Stuck timeout (ms)", ref StuckTimeoutMs, 100, 10_000))
+                NotifyModified();
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip("How long you can remain under the stuck threshold before stopping.");
+
+            if (ImGui.Checkbox("Retry pathing after stop", ref RetryOnStuck))
+                NotifyModified();
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip("If enabled, the agent will attempt to re-path after being considered stuck.");
+        }
+
         ImGui.SetNextItemWidth(200);
         if (ImGui.SliderFloat("Randomness Multiplier", ref RandomnessMultiplier, 0f, 1.0f, "%.2f"))
             NotifyModified();

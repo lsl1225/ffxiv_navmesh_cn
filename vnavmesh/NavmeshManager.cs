@@ -238,6 +238,7 @@ public sealed class NavmeshManager : IDisposable
     {
         Log($"Build task started: '{cacheKey}'");
         var customization = NavmeshCustomizationRegistry.ForTerritory(scene.TerritoryID);
+        Log($"Customization for '{scene.TerritoryID}': {customization.GetType()}");
 
         // try reading from cache
         var cache = new FileInfo($"{_cacheDir.FullName}/{cacheKey}.navmesh");
